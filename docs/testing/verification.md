@@ -1,6 +1,6 @@
 # Network Testing & Verification
 
-This document records practical tests performed on the Frankfurt network to verify connectivity, redundancy and service availability.
+This document records practical tests performed on the Frankfurt network to verify connectivity, redundancy, routing, service availability and selected security mechanisms.
 
 Only tests that have been performed are marked as verified.
 
@@ -66,8 +66,62 @@ Only tests that have been performed are marked as verified.
 
 **Result:** Successful. Both switches and routers use the same native VLAN configuration.
 
-## 5. Testing Scope
+## 5. Port Security Verification
 
-These tests cover selected redundancy, routing and connectivity scenarios. They do not represent exhaustive production acceptance testing.
+**Objective:** Observe Port Security operation on client and server access ports.
+
+**Verification performed:**
+- Port Security status and secure MAC addresses were inspected.
+- A replacement device was connected to a STAFF access port after disconnecting the original client.
+- The replacement device was able to join the network.
+
+**Result:** Port Security status and secure MAC learning were inspected. The replacement device was successfully relearned and was able to communicate on the network.
+
+**Conclusion:** The test demonstrated the limitations of dynamic MAC learning as an endpoint access control mechanism. Port Security alone does not authenticate the identity of a connected device.
+
+## 6. DHCP Snooping Verification
+
+**Objective:** Verify DHCP functionality after implementing DHCP Snooping.
+
+**Verification performed:**
+- DHCP Snooping binding tables were inspected.
+- DHCP leases were successfully renewed on all four client PCs.
+- DHCP functionality was confirmed after implementation.
+
+**Result:** Successful. All four clients successfully renewed their DHCP leases.
+
+**Observed Packet Tracer limitation:** Trust could not be configured directly on the logical Port-channel. Trust was configured on the physical EtherChannel member interfaces. The logical Port-channel continued to appear untrusted in the DHCP Snooping status output despite successful DHCP testing.
+
+## 7. Dynamic ARP Inspection (DAI) Verification
+
+**Objective:** Verify connectivity across VLANs 10 and 20 after implementing DAI.
+
+**Verification performed:**
+- Interface trust states were inspected.
+- ARP tables were cleared on the test PCs.
+- STAFF connectivity was tested after fresh ARP resolution.
+- MANAGEMENT connectivity was tested after fresh ARP resolution.
+- DAI inspection statistics were inspected.
+
+**Result:** Successful. STAFF and MANAGEMENT connectivity remained operational after fresh ARP resolution.
+
+**Scope limitation:** DAI is enabled only on VLANs 10 and 20. VLAN 30 is excluded due to Packet Tracer limitations affecting static ARP authorization.
+
+## 8. Rogue Device Test
+
+**Objective:** Observe the behavior of the existing access-layer security mechanisms when a replacement device is connected to a client access port.
+
+**Test performed:**
+- Disconnect the original client from a STAFF access port.
+- Connect a replacement device.
+- Observe the resulting network connectivity.
+
+**Result:** The replacement device was able to participate in the STAFF VLAN and communicate over the network.
+
+**Conclusion:** The tested security mechanisms did not authenticate the replacement device. A device able to obtain a legitimate DHCP binding could participate in the network, demonstrating the limitations of these mechanisms as endpoint authentication controls.
+
+## 9. Testing Scope
+
+These tests cover selected redundancy, routing, connectivity and security scenarios. They do not represent exhaustive production acceptance testing.
 
 Further security, failure-recovery and troubleshooting scenarios will be added as the project develops.
