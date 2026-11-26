@@ -55,9 +55,46 @@ All servers are directly connected to SW1, which further supports keeping SW1 as
 
 ### Routing
 
-**Decision:** OSPF is used between R1 and R2 over a dedicated point-to-point transit link.
+**Decision:** OSPF area 0 runs between R1 and R2 over a dedicated point-to-point transit link (10.0.12.0/30). The loopbacks and the three VLAN subinterfaces are advertised; the subinterfaces are passive. Each router has a static default route to its own ISP link, advertised into OSPF with `default-information originate`.
 
-**Reasoning:** Dynamic routing allows the routers to exchange routing information rather than relying exclusively on manually configured routes.
+**Reasoning:** Both routers are directly connected to all three VLANs, so in normal operation OSPF adds no new paths. Its value is in failure scenarios:
+
+- **WAN failure:** HSRP only monitors the LAN. If R1's WAN link fails, R1 remains the active gateway. With the default route advertised by R2, R1 forwards Internet traffic to R2 instead of dropping it.
+- **LAN link failure:** If a router loses its LAN interface, it learns the VLANs from its neighbour and stays reachable for management.
+
+**Rule applied:** Every internal network goes into OSPF; every interface is passive unless a neighbour is expected; ISP-facing interfaces stay out of OSPF.
+
+**Trade-off:** Failover via the OSPF default only reacts to the WAN interface going down. An upstream failure with the link still up isn't detected (production answer: IP SLA tracking). Return traffic during a WAN failover is asymmetric, which is acceptable without stateful devices in the path.
+
+### Internet Edge and NAT
+
+**Decision:** Each router performs PAT on its own WAN interface. The VLAN subinterfaces and the transit link G0/2 are `ip nat inside`; the WAN interface is `ip nat outside`.
+
+**Reasoning:** Configuring the transit link as NAT inside allows a router to translate traffic forwarded by its neighbour during a WAN failover.
+
+The ISP router has no routes to the internal private networks, like a real ISP. A loopback (198.51.100.1/32) on the ISP router acts as the Internet host for testing. An earlier version had routes to the private networks on the ISP router, which made NAT failures invisible (see [findings](../troubleshooting/findings.md)).
+
+### STAFF Access Control
+
+**Decision:** An extended ACL (`STAFF-IN-V2`) is applied inbound on the STAFF subinterface of both routers.
+
+**Policy:**
+- STAFF may use DHCP, DNS (SRV01) and HTTP/HTTPS (SRV03).
+- STAFF may not initiate connections to the SERVERS or MANAGEMENT VLANs. FTP (SRV02) is blocked; FTP stands in for internal file shares (Packet Tracer has no SMB).
+- MANAGEMENT (IT) may initiate connections to STAFF. Replies are allowed with `established` (TCP) and `echo-reply` (ICMP).
+- Internet access is allowed.
+
+**Reasoning:** The ACL is applied identically on both routers so the policy doesn't depend on which router is the active gateway. The DHCP entry also covers unicast lease renewals, which would otherwise match the deny toward the server VLAN.
+
+**Trade-off:** Router ACLs are stateless. `established` checks TCP flags only and doesn't cover UDP; real stateful inspection would require a firewall.
+
+### DHCP Relay
+
+**Decision:** Both routers relay DHCP for VLANs 10 and 20 to SRV01 (`ip helper-address 192.168.2.100`). VLAN 30 uses static addressing. The DHCP pools use the HSRP virtual IP as the default gateway.
+
+**Reasoning:** Relaying from both routers keeps DHCP working if either router fails; the relay doesn't depend on the HSRP state. As a result, SRV01 receives each client broadcast twice (once per relay, distinguished by giaddr), which is normal for redundant relays.
+
+**Note:** On real Cisco IOS, the Option 82 information inserted by DHCP snooping (with giaddr 0) can cause the relay to drop client requests unless the relay interface is trusted (`ip dhcp relay information trusted`) or Option 82 insertion is disabled on the switch. Packet Tracer doesn't enforce this check.
 
 ### Native VLAN
 
