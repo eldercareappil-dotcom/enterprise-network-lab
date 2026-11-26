@@ -120,7 +120,41 @@ Only tests that have been performed are marked as verified.
 
 **Conclusion:** The tested security mechanisms did not authenticate the replacement device. A device able to obtain a legitimate DHCP binding could participate in the network, demonstrating the limitations of these mechanisms as endpoint authentication controls.
 
-## 9. Testing Scope
+## 9. NAT Verification Against a Realistic ISP
+
+**Objective:** Verify that Internet access depends on working PAT.
+
+**Procedure:** Remove the ISP's routes to the private networks; add Loopback0 198.51.100.1/32 on the ISP router as an Internet host; ping it from STAFF-PC01.
+
+**Result:** Successful. `show ip nat translations` on R1 showed 192.168.0.102 translated to 203.0.113.1.
+
+## 10. WAN Failover (R1 WAN Link Down)
+
+**Objective:** Verify Internet access when R1's WAN link fails while R1 remains the HSRP active gateway.
+
+**Procedure:** Shut down R1 G0/1; check R1's routing table; ping 198.51.100.1 from STAFF-PC01; check NAT translations on R2; restore G0/1.
+
+**Result:** Successful. R1 installed `O*E2 0.0.0.0/0 [110/1] via 10.0.12.2`; R2 translated the traffic to 203.0.113.5. After restoring G0/1, the static default route returned.
+
+## 11. LAN Link Failure With VLANs in OSPF
+
+**Objective:** Verify that R1 keeps routes to the VLANs via R2 when its LAN interface fails, and that HSRP fails over and back.
+
+**Procedure:** Shut down R1 G0/0; check routing tables and HSRP state on both routers; traceroute from STAFF-PC01; restore G0/0.
+
+**Result:** Successful. R1 installed OSPF routes to all three VLANs via 10.0.12.2 (cost 2). R2 became active (traceroute first hop 192.168.0.12). After restoring G0/0, R1 preempted (first hop 192.168.0.11).
+
+**Observed Packet Tracer limitation:** R1 continued to display its HSRP groups as Active while its interfaces were down. The real state was confirmed through R2's state and logs and the traceroute.
+
+## 12. STAFF ACL Policy
+
+**Objective:** Verify that MANAGEMENT can reach STAFF while STAFF can't initiate connections to MANAGEMENT.
+
+**Procedure:** Ping MANAGEMENT-PC02 → STAFF-PC01 and STAFF-PC01 → MANAGEMENT-PC02; check ACL counters.
+
+**Result:** Successful. MANAGEMENT → STAFF worked (`echo-reply` entry: 4 matches); STAFF → MANAGEMENT was blocked (deny entry: 4 matches).
+
+## 13. Testing Scope
 
 These tests cover selected redundancy, routing, connectivity and security scenarios. They do not represent exhaustive production acceptance testing.
 
