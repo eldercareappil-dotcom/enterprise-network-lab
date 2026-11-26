@@ -38,7 +38,6 @@ Full write-ups: [docs/troubleshooting/findings.md](docs/troubleshooting/findings
 | [Design decisions](docs/architecture/design-decisions.md) | Why the network is built this way, alternatives considered, trade-offs |
 | [Verification](docs/testing/verification.md) | Tests performed and their results (only tests that were actually run are marked as verified) |
 | [Troubleshooting findings](docs/troubleshooting/findings.md) | Problems found through testing: symptom, root cause, fix, verification |
-| [Configurations](configs/) | Current running-configs of all devices as plain text |
 | [Milestones](topology/frankfurt/README.md) | The `.pkt` files and what each one added |
 
 ## Try it yourself
