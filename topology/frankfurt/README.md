@@ -4,7 +4,7 @@ Packet Tracer project files documenting the progressive development of the Frank
 
 | # | File | Date | Added |
 |---|---|---|---|
-| 0 | 0NetworkLab | 18.11.2026 | Base topology: VLANs, router-on-a-stick, HSRP, inter-VLAN routing |
+| 0 | 0NetworkLab | 18.11.2026 | Base topology: VLANs, router-on-a-stick |
 | 1 | 1NetworkLab-SSH | 19.11.2026 | SSH-only device management |
 | 2 | 2NetworkLab-SSH-Rapid-PVST+ | 19.11.2026 | Rapid-PVST+, SW1 as root bridge |
 | 3 | 3NetworkLab-Rapid-PVST+-DNS | 19.11.2026 | DNS server |
